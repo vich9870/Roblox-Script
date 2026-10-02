@@ -1,131 +1,112 @@
--- // Steal an Egg - Super Hub Script
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local LocalPlayer = Players.LocalPlayer
+-- Load UI Library (Rayfield)
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Notifikasi Aktif
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Steal an Egg Hub",
-    Text = "Semua fitur berhasil dimuat!",
-    Duration = 5
+local Window = Rayfield:CreateWindow({
+   Name = "Steal an Egg Hub 🥚",
+   LoadingTitle = "Loading Script...",
+   LoadingSubtitle = "by Vich9870",
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = false
 })
 
--- 1. SPEED HACK
-local function applySpeed()
-    task.spawn(function()
-        while task.wait(0.1) do
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                LocalPlayer.Character.Humanoid.WalkSpeed = 50 -- Ubah angka ini sesuai kebutuhan
+-- TAB MAIN
+local MainTab = Window:CreateTab("Main Features", 4483362458)
+
+-- 1. TOGGLE SPEED
+MainTab:CreateToggle({
+   Name = "Speed Hack",
+   CurrentValue = false,
+   Flag = "SpeedToggle",
+   Callback = function(Value)
+      _G.SpeedHack = Value
+      task.spawn(function()
+         while _G.SpeedHack do
+            task.wait(0.1)
+            if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+               game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
             end
-        end
-    end)
-end
-applySpeed()
+         end
+         if not _G.SpeedHack and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+         end
+      end)
+   end,
+})
 
--- 2. AUTO TELEPORT KE TELUR & AUTO INTERACT
-task.spawn(function()
-    while task.wait(0.5) do
-        for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("ProximityPrompt") and obj.Parent then
-                local eggPart = obj.Parent
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    -- Teleport ke lokasi telur
-                    if eggPart:IsA("BasePart") then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = eggPart.CFrame * CFrame.new(0, 3, 0)
-                        task.wait(0.1)
-                        fireproximityprompt(obj)
-                    end
-                end
+-- 2. TOGGLE AUTO TELEPORT & STEAL EGG
+MainTab:CreateToggle({
+   Name = "Auto Teleport & Steal Egg",
+   CurrentValue = false,
+   Flag = "AutoStealToggle",
+   Callback = function(Value)
+      _G.AutoSteal = Value
+      task.spawn(function()
+         while _G.AutoSteal do
+            task.wait(0.5)
+            for _, obj in pairs(workspace:GetDescendants()) do
+               if obj:IsA("ProximityPrompt") and obj.Parent then
+                  local eggPart = obj.Parent
+                  local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                  if hrp and eggPart:IsA("BasePart") then
+                     hrp.CFrame = eggPart.CFrame * CFrame.new(0, 3, 0)
+                     task.wait(0.1)
+                     fireproximityprompt(obj)
+                  end
+               end
             end
-        end
-    end
-end)
+         end
+      end)
+   end,
+})
 
--- 3. ESP (Melihat Telur & Player Tembus Tembok)
-local function applyESP(part, color, text)
-    if not part:FindFirstChild("ESPHighlight") then
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "ESPHighlight"
-        highlight.FillColor = color
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-        highlight.FillTransparency = 0.5
-        highlight.Parent = part
-    end
-end
+-- TAB VISUAL & PROTECTION
+local VisualTab = Window:CreateTab("Visual & Protection", 4483362458)
 
-task.spawn(function()
-    while task.wait(2) do
-        for _, v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") and v.Parent then
-                applyESP(v.Parent, Color3.fromRGB(255, 255, 0), "Egg")
+-- 3. TOGGLE ESP
+VisualTab:CreateToggle({
+   Name = "Egg ESP",
+   CurrentValue = false,
+   Flag = "ESPToggle",
+   Callback = function(Value)
+      _G.ESP = Value
+      if not _G.ESP then
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:FindFirstChild("ESPHighlight") then
+               v.ESPHighlight:Destroy()
             end
-        end
-    end
-end)
-
--- 4. OTOMATIS LAWAN DOCTOR SCRAMBLE (Auto Fight)
-task.spawn(function()
-    while task.wait(0.3) do
-        for _, npc in pairs(Workspace:GetDescendants()) do
-            if npc.Name:lower():find("scramble") or npc.Name:lower():find("doctor") then
-                if npc:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
-                    -- Serang NPC / Gunakan Tool
-                    local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-                    if tool then
-                        tool.Parent = LocalPlayer.Character
-                        tool:Activate()
-                    end
-                end
+         end
+      end
+      task.spawn(function()
+         while _G.ESP do
+            task.wait(2)
+            for _, v in pairs(workspace:GetDescendants()) do
+               if v:IsA("ProximityPrompt") and v.Parent and not v.Parent:FindFirstChild("ESPHighlight") then
+                  local highlight = Instance.new("Highlight")
+                  highlight.Name = "ESPHighlight"
+                  highlight.FillColor = Color3.fromRGB(255, 255, 0)
+                  highlight.Parent = v.Parent
+               end
             end
-        end
-    end
-end)
+         end
+      end)
+   end,
+})
 
--- 5. ANTI HIT, ANTI TRAP, ANTI RAGDOLL
-RunService.Stepped:Connect(function()
-    if LocalPlayer.Character then
-        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
-        end
-        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-            humanoid.PlatformStand = false
-        end
-    end
-end)
-
--- 6. AUTO CLAIM ITEM & AUTO BUY
-task.spawn(function()
-    while task.wait(1) do
-        -- Trigger remote events umum untuk claim/buy
-        for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-            if v:IsA("RemoteEvent") then
-                if v.Name:lower():find("claim") or v.Name:lower():find("buy") or v.Name:lower():find("reward") then
-                    v:FireServer()
-                end
-            end
-        end
-    end
-end)
-
--- 7. BOOST FPS (Menghapus Leg & Efek Berat)
-local function boostFPS()
-    for _, v in pairs(Workspace:GetDescendants()) do
-        if v:IsA("BasePart") then
+-- 4. BUTTON BOOST FPS
+VisualTab:CreateButton({
+   Name = "Boost FPS (Remove Lag)",
+   Callback = function()
+      for _, v in pairs(workspace:GetDescendants()) do
+         if v:IsA("BasePart") then
             v.Material = Enum.Material.SmoothPlastic
             v.Reflectance = 0
-        elseif v:IsA("Decal") or v:IsA("Texture") then
+         elseif v:IsA("Decal") or v:IsA("Texture") then
             v:Destroy()
-        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+         elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
             v.Enabled = false
-        end
-    end
-    game:GetService("Lighting").GlobalShadows = false
-end
-boostFPS()
+         end
+      end
+      game:GetService("Lighting").GlobalShadows = false
+      Rayfield:Notify({Title = "Success", Content = "FPS Boosted!", Duration = 3})
+   end,
+})
